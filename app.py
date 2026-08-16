@@ -622,7 +622,6 @@ if not st.session_state.show_final_output:
 
                 master_data = []
 
-                # Grocery ingredients
                 for item in GROCERIES:
 
                     master_data.append(
@@ -632,7 +631,6 @@ if not st.session_state.show_final_output:
                         }
                     )
 
-                # Vegetable ingredients
                 for item in VEGETABLES:
 
                     master_data.append(
@@ -642,7 +640,6 @@ if not st.session_state.show_final_output:
                         }
                     )
 
-                # Temporarily added ingredients
                 master_data.extend(
                     st.session_state.extra_ingredients
                 )
@@ -874,7 +871,6 @@ if not st.session_state.show_final_output:
                     st.session_state.current_recipe_df.copy()
                 )
 
-                # Keep only rows with quantity
                 recipe_df = recipe_df[
                     recipe_df["Qty"].notna()
                 ].copy()
@@ -904,10 +900,9 @@ if not st.session_state.show_final_output:
                         ]
                     ].copy()
 
-                    # ----------------------------------------
-                    # CRITICAL:
-                    # STORE A COPY OF THIS RECIPE
-                    # ----------------------------------------
+                    # IMPORTANT:
+                    # Store a COPY so it is not overwritten
+                    # by the next recipe.
 
                     st.session_state.recipe_collection[
                         current_recipe_name
@@ -917,12 +912,8 @@ if not st.session_state.show_final_output:
                         f"✅ '{current_recipe_name}' saved."
                     )
 
-                    # Clear current recipe
                     st.session_state.current_recipe = None
                     st.session_state.current_recipe_df = None
-
-                    # Reset recipe input
-                    st.session_state.recipe_name_input = ""
 
                     st.rerun()
 
@@ -942,7 +933,6 @@ if not st.session_state.show_final_output:
                     st.session_state.current_recipe_df.copy()
                 )
 
-                # Keep only entered quantities
                 recipe_df = recipe_df[
                     recipe_df["Qty"].notna()
                 ].copy()
@@ -954,7 +944,6 @@ if not st.session_state.show_final_output:
                     != ""
                 ]
 
-                # Save current recipe
                 if not recipe_df.empty:
 
                     recipe_df = recipe_df[
@@ -1021,10 +1010,6 @@ if (
         ignore_index=True
     )
 
-    # ========================================================
-    # FINAL COLUMN ORDER
-    # ========================================================
-
     final_df = final_df[
         [
             "Recipe",
@@ -1036,7 +1021,7 @@ if (
 
 
     # ========================================================
-    # DISPLAY
+    # DISPLAY FINAL TABLE
     # ========================================================
 
     st.dataframe(
@@ -1067,18 +1052,21 @@ if (
         )
 
 
-# ========================================================
-# EXCEL DOWNLOAD
-# ========================================================
+    # ========================================================
+    # DOWNLOAD & SHARE
+    # ========================================================
 
-st.markdown(
-    '<div class="section-title">'
-    '📥 Download'
-    '</div>',
-    unsafe_allow_html=True
-)
+    st.markdown(
+        '<div class="section-title">'
+        '📥 Download & Share'
+        '</div>',
+        unsafe_allow_html=True
+    )
 
-try:
+
+    # ========================================================
+    # CREATE EXCEL
+    # ========================================================
 
     excel_output = BytesIO()
 
@@ -1093,38 +1081,14 @@ try:
             sheet_name="Recipe Ingredients"
         )
 
+    excel_output.seek(0)
+
     excel_data = excel_output.getvalue()
 
-    st.download_button(
-        label="📥 Download Excel",
-        data=excel_data,
-        file_name="Recipe_Ingredient_Requirements.xlsx",
-        mime=(
-            "application/vnd.openxmlformats-officedocument."
-            "spreadsheetml.sheet"
-        ),
-        use_container_width=True
-    )
 
-except Exception as e:
-
-    st.error(
-        "Unable to prepare the Excel file."
-    )
-
-    st.code(
-        str(e)
-    )
     # ========================================================
-    # TEXT OUTPUT
+    # CREATE TEXT
     # ========================================================
-
-    st.markdown(
-        '<div class="section-title">'
-        '📱 Copy / Share as Text'
-        '</div>',
-        unsafe_allow_html=True
-    )
 
     text_lines = []
 
@@ -1185,26 +1149,66 @@ except Exception as e:
 
 
     # ========================================================
+    # DOWNLOAD BUTTONS
+    # ========================================================
+
+    col1, col2 = st.columns(2)
+
+
+    # --------------------------------------------------------
+    # EXCEL
+    # --------------------------------------------------------
+
+    with col1:
+
+        st.download_button(
+            label="📊 Download Excel",
+            data=excel_data,
+            file_name="Recipe_Ingredient_Requirements.xlsx",
+            mime=(
+                "application/vnd.openxmlformats-officedocument."
+                "spreadsheetml.sheet"
+            ),
+            use_container_width=True
+        )
+
+
+    # --------------------------------------------------------
+    # TEXT FILE
+    # --------------------------------------------------------
+
+    with col2:
+
+        st.download_button(
+            label="📄 Download Text",
+            data=text_output.encode("utf-8"),
+            file_name="Recipe_Ingredient_Requirements.txt",
+            mime="text/plain",
+            use_container_width=True
+        )
+
+
+    # ========================================================
     # COPYABLE TEXT
     # ========================================================
 
-    st.text_area(
-        "Copy this text and share through WhatsApp / SMS / Email",
-        value=text_output,
-        height=500
+    st.markdown(
+        '<div class="section-title">'
+        '📱 Copy / Share as Text'
+        '</div>',
+        unsafe_allow_html=True
     )
 
+    st.write(
+        "Click inside the box → Ctrl+A → Ctrl+C → "
+        "paste into WhatsApp, SMS, Email, etc."
+    )
 
-    # ========================================================
-    # TEXT FILE DOWNLOAD
-    # ========================================================
-
-    st.download_button(
-        label="📄 Download Text File",
-        data=text_output,
-        file_name="Recipe_Ingredient_Requirements.txt",
-        mime="text/plain",
-        use_container_width=True
+    st.text_area(
+        "Copyable Requirement",
+        value=text_output,
+        height=450,
+        key="copyable_text"
     )
 
 
