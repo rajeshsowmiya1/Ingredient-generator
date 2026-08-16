@@ -1067,16 +1067,18 @@ if (
         )
 
 
-    # ========================================================
-    # EXCEL DOWNLOAD
-    # ========================================================
+# ========================================================
+# EXCEL DOWNLOAD
+# ========================================================
 
-    st.markdown(
-        '<div class="section-title">'
-        '📥 Download'
-        '</div>',
-        unsafe_allow_html=True
-    )
+st.markdown(
+    '<div class="section-title">'
+    '📥 Download'
+    '</div>',
+    unsafe_allow_html=True
+)
+
+try:
 
     excel_output = BytesIO()
 
@@ -1091,11 +1093,11 @@ if (
             sheet_name="Recipe Ingredients"
         )
 
-    excel_output.seek(0)
+    excel_data = excel_output.getvalue()
 
     st.download_button(
         label="📥 Download Excel",
-        data=excel_output.getvalue(),
+        data=excel_data,
         file_name="Recipe_Ingredient_Requirements.xlsx",
         mime=(
             "application/vnd.openxmlformats-officedocument."
@@ -1104,7 +1106,15 @@ if (
         use_container_width=True
     )
 
+except Exception as e:
 
+    st.error(
+        "Unable to prepare the Excel file."
+    )
+
+    st.code(
+        str(e)
+    )
     # ========================================================
     # TEXT OUTPUT
     # ========================================================
