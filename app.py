@@ -46,7 +46,6 @@ st.markdown(
             {DARK_BROWN},
             {RICH_BROWN}
         );
-
         padding: 25px 30px;
         border-radius: 14px;
         margin-bottom: 25px;
@@ -444,6 +443,7 @@ with st.sidebar:
         ingredient = new_ingredient.strip()
 
         if ingredient == "":
+
             st.warning(
                 "Please enter an ingredient name."
             )
@@ -514,11 +514,11 @@ st.markdown(
 
     1. Enter the recipe name.<br>
     2. Generate the ingredient requirement.<br>
-    3. Use the search box to quickly find ingredients.<br>
+    3. Use the search box to quickly locate ingredients.<br>
     4. Enter quantities in Column D.<br>
     5. Select the purchase unit in Column E.<br>
     6. Modify Category in Column C if required.<br>
-    7. Download the completed requirement as Excel.
+    7. Download Excel or copy the text for sharing.
 
     </div>
     """,
@@ -550,6 +550,7 @@ if st.button(
 ):
 
     if recipe_name.strip() == "":
+
         st.warning(
             "Please enter the recipe name."
         )
@@ -603,7 +604,6 @@ if st.button(
         )
 
         requirement["Quantity"] = None
-
         requirement["Purchase Unit"] = ""
 
         requirement = requirement[
@@ -633,11 +633,11 @@ if st.session_state.requirement is not None:
 
     st.caption(
         "Ingredients are pre-loaded from the master lists. "
-        "Use the search box below to quickly locate an ingredient."
+        "Use the search box to quickly locate an ingredient."
     )
 
     # ========================================================
-    # SEARCH INGREDIENTS
+    # SEARCH
     # ========================================================
 
     search_text = st.text_input(
@@ -647,7 +647,7 @@ if st.session_state.requirement is not None:
     )
 
     # ========================================================
-    # FILTER TABLE
+    # FILTER DISPLAY ONLY
     # ========================================================
 
     if search_text.strip():
@@ -658,16 +658,19 @@ if st.session_state.requirement is not None:
             .casefold()
         )
 
-        display_df = st.session_state.requirement[
-            st.session_state.requirement["Ingredients"]
-            .astype(str)
-            .str.casefold()
-            .str.contains(
-                search_value,
-                na=False,
-                regex=False
-            )
-        ].copy()
+        display_df = (
+            st.session_state.requirement[
+                st.session_state.requirement["Ingredients"]
+                .astype(str)
+                .str.casefold()
+                .str.contains(
+                    search_value,
+                    na=False,
+                    regex=False
+                )
+            ]
+            .copy()
+        )
 
     else:
 
@@ -745,16 +748,18 @@ if st.session_state.requirement is not None:
 
         disabled=[
             "Ingredients"
-        ]
+        ],
+
+        key="ingredient_editor"
     )
 
     # ========================================================
-    # SAVE CHANGES BACK TO FULL REQUIREMENT
+    # SAVE EDITS BACK TO FULL REQUIREMENT
     # ========================================================
 
     if not edited_df.empty:
 
-        for index, row in edited_df.iterrows():
+        for _, row in edited_df.iterrows():
 
             ingredient_name = row["Ingredients"]
 
@@ -796,22 +801,31 @@ if st.session_state.requirement is not None:
         unsafe_allow_html=True
     )
 
+    total_ingredients = len(
+        st.session_state.requirement
+    )
+
+    completed_mask = (
+        st.session_state.requirement["Quantity"]
+        .notna()
+    )
+
+    completed = completed_mask.sum()
+
+    remaining = (
+        total_ingredients - completed
+    )
+
     col1, col2, col3 = st.columns(3)
 
     with col1:
 
         st.metric(
             "Total Ingredients",
-            len(st.session_state.requirement)
+            total_ingredients
         )
 
     with col2:
-
-        completed = (
-            st.session_state.requirement["Quantity"]
-            .notna()
-            .sum()
-        )
 
         st.metric(
             "Quantities Entered",
@@ -820,57 +834,235 @@ if st.session_state.requirement is not None:
 
     with col3:
 
-        remaining = (
-            len(st.session_state.requirement)
-            - completed
-        )
-
         st.metric(
             "Remaining",
             remaining
         )
 
     # ========================================================
-    # DOWNLOAD
+    # OUTPUT SECTION
     # ========================================================
 
     st.markdown(
         '<div class="section-title">'
-        '⬇️ Download'
+        '⬇️ Download / Share'
         '</div>',
         unsafe_allow_html=True
     )
 
-    output = BytesIO()
+    # ========================================================
+    # ONLY ROWS WITH QUANTITY
+    # ========================================================
 
-    with pd.ExcelWriter(
-        output,
-        engine="openpyxl"
-    ) as writer:
+    completed_df = (
+        st.session_state.requirement[
+            st.session_state.requirement["Quantity"]
+            .notna()
+        ]
+        .copy()
+    )
 
-        st.session_state.requirement.to_excel(
-            writer,
-            index=False,
-            sheet_name="Ingredient Requirement"
+    # Remove completely blank quantity values
+    completed_df = completed_df[
+        completed_df["Quantity"]
+        .astype(str)
+        .str.strip()
+        != ""
+    ]
+
+    if completed_df.empty:
+
+        st.info(
+            "Enter at least one quantity to enable "
+            "Excel and Text sharing."
         )
 
-    output.seek(0)
+    else:
 
-    filename = (
-        f"{recipe_name.strip()} "
-        f"- Ingredient Requirement.xlsx"
-    )
+        # ====================================================
+        # EXCEL DOWNLOAD
+        # ====================================================
 
-    st.download_button(
-        label="⬇️ Download Ingredient Requirement",
-        data=output,
-        file_name=filename,
-        mime=(
-            "application/vnd.openxmlformats-officedocument."
-            "spreadsheetml.sheet"
-        ),
-        use_container_width=True
-    )
+        output = BytesIO()
+
+        with pd.ExcelWriter(
+            output,
+            engine="openpyxl"
+        ) as writer:
+
+            completed_df.to_excel(
+                writer,
+                index=False,
+                sheet_name="Ingredient Requirement"
+            )
+
+        output.seek(0)
+
+        safe_recipe_name = (
+            recipe_name.strip()
+            if recipe_name.strip()
+            else "Recipe"
+        )
+
+        excel_filename = (
+            f"{safe_recipe_name} "
+            f"- Ingredient Requirement.xlsx"
+        )
+
+        st.download_button(
+            label="📥 Download Excel",
+            data=output.getvalue(),
+            file_name=excel_filename,
+            mime=(
+                "application/vnd.openxmlformats-officedocument."
+                "spreadsheetml.sheet"
+            ),
+            use_container_width=True
+        )
+
+        # ====================================================
+        # CREATE TEXT VERSION
+        # ====================================================
+
+        text_lines = []
+
+        text_lines.append(
+            f"🍛 {safe_recipe_name.upper()}"
+        )
+
+        text_lines.append("")
+        text_lines.append(
+            "INGREDIENT REQUIREMENT"
+        )
+
+        text_lines.append(
+            "----------------------------"
+        )
+
+        # ====================================================
+        # GROUP BY CATEGORY
+        # ====================================================
+
+        categories = [
+            "Grocery",
+            "Vegetables"
+        ]
+
+        for category in categories:
+
+            category_df = completed_df[
+                completed_df["Category"]
+                == category
+            ]
+
+            if category_df.empty:
+                continue
+
+            text_lines.append("")
+            text_lines.append(
+                f"📌 {category.upper()}"
+            )
+
+            for _, row in category_df.iterrows():
+
+                ingredient = str(
+                    row["Ingredients"]
+                ).strip()
+
+                quantity = row["Quantity"]
+
+                unit = str(
+                    row["Purchase Unit"]
+                ).strip()
+
+                # --------------------------------------------
+                # FORMAT QUANTITY
+                # --------------------------------------------
+
+                try:
+
+                    quantity_float = float(
+                        quantity
+                    )
+
+                    if quantity_float.is_integer():
+
+                        quantity_text = str(
+                            int(quantity_float)
+                        )
+
+                    else:
+
+                        quantity_text = (
+                            f"{quantity_float:.3f}"
+                            .rstrip("0")
+                            .rstrip(".")
+                        )
+
+                except:
+
+                    quantity_text = str(
+                        quantity
+                    )
+
+                # --------------------------------------------
+                # CREATE TEXT LINE
+                # --------------------------------------------
+
+                if unit:
+
+                    text_lines.append(
+                        f"• {ingredient} - "
+                        f"{quantity_text} {unit}"
+                    )
+
+                else:
+
+                    text_lines.append(
+                        f"• {ingredient} - "
+                        f"{quantity_text}"
+                    )
+
+        text_output = "\n".join(
+            text_lines
+        )
+
+        # ====================================================
+        # TEXT TO COPY / SHARE
+        # ====================================================
+
+        st.markdown(
+            "**📱 Text to Share**"
+        )
+
+        st.caption(
+            "Click inside the box, press Ctrl+A, then Ctrl+C "
+            "to copy and paste into WhatsApp, SMS, email, etc."
+        )
+
+        st.text_area(
+            "Copy the text below:",
+            value=text_output,
+            height=350,
+            key="share_text"
+        )
+
+        # ====================================================
+        # DOWNLOAD TEXT FILE
+        # ====================================================
+
+        text_filename = (
+            f"{safe_recipe_name} "
+            f"- Ingredient Requirement.txt"
+        )
+
+        st.download_button(
+            label="📄 Download Text File",
+            data=text_output,
+            file_name=text_filename,
+            mime="text/plain",
+            use_container_width=True
+        )
 
     # ========================================================
     # CLEAR
