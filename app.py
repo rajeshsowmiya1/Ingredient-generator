@@ -412,7 +412,6 @@ if "show_final_output" not in st.session_state:
 if "extra_ingredients" not in st.session_state:
     st.session_state.extra_ingredients = []
 
-
 # ============================================================
 # SIDEBAR
 # ============================================================
@@ -513,7 +512,6 @@ with st.sidebar:
         unsafe_allow_html=True
     )
 
-
 # ============================================================
 # INFORMATION BOX
 # ============================================================
@@ -541,7 +539,6 @@ st.markdown(
     unsafe_allow_html=True
 )
 
-
 # ============================================================
 # SAVED RECIPES DISPLAY
 # ============================================================
@@ -567,16 +564,15 @@ if st.session_state.recipe_collection:
         f"{len(saved_names)} recipe(s) currently saved."
     )
 
-
 # ============================================================
 # NEW / CURRENT RECIPE
 # ============================================================
 
 if not st.session_state.show_final_output:
 
-    # --------------------------------------------------------
+    # ========================================================
     # RECIPE NAME
-    # --------------------------------------------------------
+    # ========================================================
 
     if st.session_state.current_recipe_df is None:
 
@@ -593,9 +589,9 @@ if not st.session_state.show_final_output:
             key="recipe_name_input"
         )
 
-        # ----------------------------------------------------
+        # ====================================================
         # GENERATE INGREDIENT LIST
-        # ----------------------------------------------------
+        # ====================================================
 
         if st.button(
             "✨ Generate Ingredient List",
@@ -686,7 +682,6 @@ if not st.session_state.show_final_output:
 
                 st.rerun()
 
-
     # ========================================================
     # CURRENT RECIPE INGREDIENT EDITOR
     # ========================================================
@@ -708,9 +703,9 @@ if not st.session_state.show_final_output:
             unsafe_allow_html=True
         )
 
-        # ----------------------------------------------------
+        # ====================================================
         # SEARCH
-        # ----------------------------------------------------
+        # ====================================================
 
         search_text = st.text_input(
             "🔎 Search Ingredients",
@@ -744,9 +739,9 @@ if not st.session_state.show_final_output:
             f"{len(current_df)} ingredients"
         )
 
-        # ----------------------------------------------------
+        # ====================================================
         # DATA EDITOR
-        # ----------------------------------------------------
+        # ====================================================
 
         edited_df = st.data_editor(
 
@@ -758,7 +753,10 @@ if not st.session_state.show_final_output:
 
             num_rows="fixed",
 
-            key=f"editor_{st.session_state.recipe_number}",
+            # Stable key for this particular recipe.
+            # This helps prevent Qty/Unit edits from
+            # being reset unnecessarily.
+            key=f"ingredient_editor_{current_recipe_name}",
 
             column_config={
 
@@ -781,7 +779,8 @@ if not st.session_state.show_final_output:
                     "Qty",
                     min_value=0,
                     step=0.001,
-                    format="%.3f"
+                    format="%.3f",
+                    help="Enter the required quantity"
                 ),
 
                 "Unit": st.column_config.SelectboxColumn(
@@ -793,7 +792,8 @@ if not st.session_state.show_final_output:
                         "ml",
                         "piece",
                         "dozen"
-                    ]
+                    ],
+                    help="Select the purchase unit"
                 )
             },
 
@@ -804,9 +804,9 @@ if not st.session_state.show_final_output:
             ]
         )
 
-        # ----------------------------------------------------
+        # ====================================================
         # SAVE EDITS TO CURRENT RECIPE
-        # ----------------------------------------------------
+        # ====================================================
 
         for _, row in edited_df.iterrows():
 
@@ -829,10 +829,9 @@ if not st.session_state.show_final_output:
                 "Unit"
             ] = row["Unit"]
 
-
-        # ----------------------------------------------------
+        # ====================================================
         # CURRENT RECIPE STATUS
-        # ----------------------------------------------------
+        # ====================================================
 
         entered_count = (
             st.session_state.current_recipe_df[
@@ -847,17 +846,15 @@ if not st.session_state.show_final_output:
             f"{entered_count} ingredient(s) entered."
         )
 
-
         # ====================================================
         # BUTTONS
         # ====================================================
 
         col1, col2 = st.columns(2)
 
-
-        # ----------------------------------------------------
+        # ====================================================
         # SAVE RECIPE & CONTINUE
-        # ----------------------------------------------------
+        # ====================================================
 
         with col1:
 
@@ -900,10 +897,8 @@ if not st.session_state.show_final_output:
                         ]
                     ].copy()
 
-                    # IMPORTANT:
-                    # Store a COPY so it is not overwritten
-                    # by the next recipe.
-
+                    # Store a COPY so that the next recipe
+                    # cannot overwrite this recipe.
                     st.session_state.recipe_collection[
                         current_recipe_name
                     ] = recipe_df.copy()
@@ -917,10 +912,9 @@ if not st.session_state.show_final_output:
 
                     st.rerun()
 
-
-        # ----------------------------------------------------
+        # ====================================================
         # FINISH & GENERATE
-        # ----------------------------------------------------
+        # ====================================================
 
         with col2:
 
@@ -973,7 +967,6 @@ if not st.session_state.show_final_output:
 
                     st.rerun()
 
-
 # ============================================================
 # FINAL CONSOLIDATED OUTPUT
 # ============================================================
@@ -1019,7 +1012,6 @@ if (
         ]
     ]
 
-
     # ========================================================
     # DISPLAY FINAL TABLE
     # ========================================================
@@ -1029,7 +1021,6 @@ if (
         use_container_width=True,
         hide_index=True
     )
-
 
     # ========================================================
     # SUMMARY
@@ -1051,7 +1042,6 @@ if (
             len(final_df)
         )
 
-
     # ========================================================
     # DOWNLOAD & SHARE
     # ========================================================
@@ -1063,28 +1053,37 @@ if (
         unsafe_allow_html=True
     )
 
-
     # ========================================================
     # CREATE EXCEL
     # ========================================================
 
     excel_output = BytesIO()
 
-    with pd.ExcelWriter(
-        excel_output,
-        engine="openpyxl"
-    ) as writer:
+    try:
 
-        final_df.to_excel(
-            writer,
-            index=False,
-            sheet_name="Recipe Ingredients"
+        with pd.ExcelWriter(
+            excel_output,
+            engine="openpyxl"
+        ) as writer:
+
+            final_df.to_excel(
+                writer,
+                index=False,
+                sheet_name="Recipe Ingredients"
+            )
+
+        excel_output.seek(0)
+        excel_data = excel_output.getvalue()
+
+    except Exception as e:
+
+        excel_data = None
+
+        st.error(
+            "Excel download requires openpyxl. "
+            "Please make sure openpyxl is included "
+            "in requirements.txt."
         )
-
-    excel_output.seek(0)
-
-    excel_data = excel_output.getvalue()
-
 
     # ========================================================
     # CREATE TEXT
@@ -1142,11 +1141,9 @@ if (
 
         text_lines.append("")
 
-
     text_output = "\n".join(
         text_lines
     )
-
 
     # ========================================================
     # DOWNLOAD BUTTONS
@@ -1154,24 +1151,26 @@ if (
 
     col1, col2 = st.columns(2)
 
-
     # --------------------------------------------------------
     # EXCEL
     # --------------------------------------------------------
 
     with col1:
 
-        st.download_button(
-            label="📊 Download Excel",
-            data=excel_data,
-            file_name="Recipe_Ingredient_Requirements.xlsx",
-            mime=(
-                "application/vnd.openxmlformats-officedocument."
-                "spreadsheetml.sheet"
-            ),
-            use_container_width=True
-        )
+        if excel_data is not None:
 
+            st.download_button(
+                label="📊 Download Excel",
+                data=excel_data,
+                file_name=(
+                    "Recipe_Ingredient_Requirements.xlsx"
+                ),
+                mime=(
+                    "application/vnd.openxmlformats-officedocument."
+                    "spreadsheetml.sheet"
+                ),
+                use_container_width=True
+            )
 
     # --------------------------------------------------------
     # TEXT FILE
@@ -1182,11 +1181,12 @@ if (
         st.download_button(
             label="📄 Download Text",
             data=text_output.encode("utf-8"),
-            file_name="Recipe_Ingredient_Requirements.txt",
+            file_name=(
+                "Recipe_Ingredient_Requirements.txt"
+            ),
             mime="text/plain",
             use_container_width=True
         )
-
 
     # ========================================================
     # COPYABLE TEXT
@@ -1210,7 +1210,6 @@ if (
         height=450,
         key="copyable_text"
     )
-
 
     # ========================================================
     # START NEW REQUIREMENT
@@ -1236,7 +1235,6 @@ if (
         st.session_state.extra_ingredients = []
 
         st.rerun()
-
 
 # ============================================================
 # FOOTER
