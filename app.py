@@ -46,6 +46,7 @@ st.markdown(
             {DARK_BROWN},
             {RICH_BROWN}
         );
+
         padding: 25px 30px;
         border-radius: 14px;
         margin-bottom: 25px;
@@ -115,6 +116,16 @@ st.markdown(
         color: {WHITE};
     }}
 
+    input {{
+        background-color: {WHITE} !important;
+        color: {TEXT_BROWN} !important;
+    }}
+
+    [data-testid="stDataEditor"] {{
+        background-color: {WHITE};
+        border-radius: 10px;
+    }}
+
     .info-box {{
         background-color: {LIGHT_CREAM};
         border-left: 5px solid {GOLD};
@@ -138,7 +149,7 @@ st.markdown(
 )
 
 # ============================================================
-# HEADER
+# APPLICATION HEADER
 # ============================================================
 
 st.markdown(
@@ -155,17 +166,230 @@ st.markdown(
 )
 
 # ============================================================
-# IMPORTANT:
-# KEEP YOUR EXISTING GROCERIES AND VEGETABLES LISTS HERE
+# MASTER GROCERY LIST
 # ============================================================
 
-# Your existing:
-#
-# GROCERIES = [...]
-#
-# VEGETABLES = [...]
-#
-# Keep the complete lists from your previous app here.
+GROCERIES = [
+    "மஞ்சள் தூள்",
+    "மைதா மாவு",
+    "கல் உப்பு",
+    "கோதுமை மாவு",
+    "டேபிள் சால்ட்",
+    "கிழங்கு மாவு",
+    "சீரகம்",
+    "கடலை மாவு",
+    "குருமிளகு",
+    "அரிசி மாவு",
+    "சிறிய கடுகு",
+    "கான்பிளவர் மாவு",
+    "கடலைப்பருப்பு",
+    "R.B. சோடா உப்பு",
+    "வெ. உளுந்தம்பருப்பு",
+    "நயம் பட்டை",
+    "நெ.1 துவரம் பருப்பு",
+    "நயம் கிராம்பு",
+    "பாசிபருப்பு",
+    "நயம் சோம்பு",
+    "வடபருப்பு (பட்டாணி)",
+    "கசகசா",
+    "பாசிபயிறு",
+    "ஏலக்காய்",
+    "வரமிளகாய்",
+    "ஜாதிக்காய்",
+    "LG பெருங்காயம்",
+    "பொட்டுக்கடலை",
+    "வெந்தயம்",
+    "வறுத்த நிலக்கடலை",
+    "மண்டை வெல்லம்",
+    "பச்சை நிலக்கடலை",
+    "நாட்டு மல்லி",
+    "குருமிளகுப்பொடி",
+    "பெருங்காய பவுடர்",
+    "நரசுஸ் காபி",
+    "மல்லிப்பொடி (சக்தி)",
+    "சன்ரைஸ் காபி",
+    "மிளகாய் பொடி (சக்தி)",
+    "பெரிய அப்பளம்",
+    "இட்லி பொடி (சக்தி)",
+    "அப்பளப்பூ",
+    "கரம் மசாலா",
+    "மோர் மிளகாய்",
+    "கோதுமை ரவை",
+    "வெள்ளை சுண்டக்கடலை",
+    "வெள்ளை ரவை",
+    "பெருந்தரி சக்கரை (சீனி)",
+    "சாப்பாட்டு கோதுமை ரவை",
+    "சில்லி மசாலாப்பொடி",
+    "சம்பா கோதுமை",
+    "சபீனா கிளீனிங் பவுடர்",
+    "ஸ்பெஷல் புளி",
+    "மணதக்காளி வத்தல்",
+    "சாப்பாட்டு அரிசி (வெ. பொன்னி)",
+    "சுண்ட வத்தல்",
+    "BT பச்சரிசி",
+    "தேங்காய் எண்ணெய்",
+    "பிரியாணி அரிசி (சீரகசம்பா)",
+    "ரீபன்ட் ஆயில் (கணபதி)",
+    "பிரியாணி அரிசி (பாசுமதி)",
+    "நல்லெண்ணெய்",
+    "இட்லி அரிசி (வெள்ளை காடை)",
+    "விளக்கெண்ணெய்",
+    "நைலான் ஜவ்வரிசி",
+    "டால்டா",
+    "மலைப்பூண்டு",
+    "நெய்",
+    "பாயாச அடை (பிரியா)",
+    "வெண்ணெய்",
+    "உருட்டு உளுந்து",
+    "முழு முந்திரி",
+    "வெள்ளை எள்ளு",
+    "அரை முந்திரி",
+    "காய்ந்த சுக்கு",
+    "திராட்சை",
+    "பிஸ்தா பருப்பு",
+    "கை கிளவுஸ்",
+    "சாரா பருப்பு",
+    "குங்குமப் பூ",
+    "லெமன் பவுடர்",
+    "கஸ்தூரி மேத்தி",
+    "சிவப்புக்கலர் பவுடர்",
+    "ரசப்பொடி (சக்தி)",
+    "ரோஸ் மில்க் பவுடர்",
+    "அம்மோனியா பால் பவுடர்",
+    "கிரேப் பவுடர்",
+    "சர்க்கரை இல்லாத கோவா",
+    "ரோஸ் எசன்ஸ்",
+    "வெள்ளை சோயா",
+    "பாதாம் எசன்ஸ்",
+    "கெட்டி அவுல்",
+    "கிரேப் எசன்ஸ்",
+    "கம்பு குருனை",
+    "பைனாப்பிள் எசன்ஸ்",
+    "பஜ்ஜி மாவு",
+    "குளோப்ஜாமூன் பவுடர் (MTR)",
+    "சுக்குபொடி",
+    "நந்தி மார்க் ஜிலேபி பருப்பு",
+    "பன்னீர்",
+    "பிஸ்கட் அமோனியா",
+    "கலாகந்த்",
+    "டைமண்ட் கல்கண்டு",
+    "பேரிச்சை",
+    "(KTR) பன்னீர்",
+    "பல்பொடி",
+    "பச்சைக்கற்பூரம்",
+    "தேய்ப்பு மஞ்சி (இரும்பு)",
+    "பாதாம் பருப்பு",
+    "தீப்பெட்டி",
+    "நியூஸ் பேப்பர்",
+    "அரசன் சோப்",
+    "ஆயில் பேப்பர்",
+    "குங்குமம்",
+    "சூடம்",
+    "சந்தனம்",
+    "வினிகர்",
+    "திருநீறு",
+    "லெமன் சால்ட்",
+    "சர்விங் கேப்",
+    "3 ரோஸஸ் டீ",
+    "டிஷ்யூ பேப்பர்",
+    "பாதாம் மாஸ் பவுடர்",
+    "பேக்கிங் பவுடர்",
+    "மில்க் மைட்",
+    "டீ வடிக்கட்டி",
+    "சிக்கன் மசாலா பொடி (சக்தி)",
+    "Dustbin Cover",
+    "மட்டன் மசாலா பொடி (சக்தி)",
+    "சாம்பார் பொடி",
+    "செர்ரிபழம்",
+    "சில்லி சாஸ்",
+    "தக்காளி சாஸ்",
+    "சோயா சாஸ்",
+    "தேன்",
+    "தண்ணீர் டம்ளர்",
+    "காபி டம்ளர்",
+    "பாயாச கப்",
+    "சேமியா",
+    "பேப்பர் ரோல்"
+]
+
+# ============================================================
+# MASTER VEGETABLE LIST
+# ============================================================
+
+VEGETABLES = [
+    "எலுமிச்சம்பழம்",
+    "சின்ன வெங்காயம்",
+    "பல்லாரி",
+    "பச்சை மிளகாய்",
+    "நாட்டுத்தக்காளி",
+    "சேனை கிழங்கு",
+    "உருளைக்கிழங்கு",
+    "குடைமிளகாய்",
+    "சி. குடைமிளகாய்",
+    "வெங்காயத்தூள்",
+    "வெள்ளை ஓட்டுத்தேங்காய்",
+    "பல் பூண்டு",
+    "பேபிகார்ன் உரித்தது",
+    "சிப்பி காளான்",
+    "முட்டைக்கோஸ்",
+    "பட்டன் குடைகாளான்",
+    "கேரட்",
+    "சைவ மீன்",
+    "கறிபீன்ஸ்",
+    "சைவ மட்டன்",
+    "முருங்கை காய்",
+    "பைனாப்பிள்",
+    "சிறிய பிஞ்சு கத்திரிக்காய்",
+    "பால் காலை",
+    "பெரிய கத்திரிக்காய்",
+    "பால் மாலை",
+    "பச்சை பட்டாணி",
+    "டிபன் இலை",
+    "டபுள் பீன்ஸ்",
+    "சாப்பாட்டு இலை",
+    "ஊட்டி காளிபிளவர்",
+    "டர்னர் கோஸ்",
+    "ராக்கூடை",
+    "நூல் கோஸ்",
+    "தட்டக்கூடை",
+    "புடலங்காய்",
+    "ஈக்குசீமார்",
+    "முற்றியவிதை பூசணிக்காய்",
+    "காடாதுணி",
+    "பீட்ரூட்",
+    "ஈரலை துண்டு கலர்",
+    "அவரைக்காய்",
+    "கொத்தவரைக்காய்",
+    "மாங்காய்",
+    "வாழைக்காய்",
+    "முறம்",
+    "பாகற்காய்",
+    "ஈரலை துண்டு வெள்ளை",
+    "பழைய துணி",
+    "ஜனதாவேஷ்டி",
+    "சவுக்கு விறகு",
+    "கிளை கோஸ்",
+    "கேஸ் சிலிண்டர்",
+    "கருணைக்கிழங்கு",
+    "கேஸ் அடுப்பு",
+    "பூசணிக்காய்",
+    "மிக்ஸி",
+    "அரசாணிக்காய்",
+    "அடுப்புக்கரி",
+    "வெண்டைக்காய்",
+    "தண்ணீர் கேன்",
+    "ஆப்பிள் தக்காளி",
+    "வெற்றிலை, பாக்கு",
+    "மாங்காய் இஞ்சி",
+    "வாழைப்பழம்",
+    "நார் இஞ்சி",
+    "சீட்லெஸ் திராட்சை",
+    "மல்லிதழை",
+    "பாக்கு தட்டு",
+    "புதினா",
+    "ரவுண்டு இலை",
+    "கறிவேப்பிலை"
+]
 
 # ============================================================
 # SESSION STATE
@@ -192,9 +416,9 @@ with st.sidebar:
         unsafe_allow_html=True
     )
 
-    st.write(
-        "Add an ingredient that is not currently "
-        "available in the master template."
+    st.markdown(
+        "Add an ingredient that is not currently available "
+        "in the master template."
     )
 
     st.markdown("---")
@@ -219,33 +443,40 @@ with st.sidebar:
 
         ingredient = new_ingredient.strip()
 
-        existing = (
-            GROCERIES
-            + VEGETABLES
-            + [
-                x["Ingredients"]
-                for x in st.session_state.extra_ingredients
-            ]
-        )
-
         if ingredient == "":
-            st.warning("Please enter an ingredient name.")
-
-        elif ingredient in existing:
-            st.warning("This ingredient already exists.")
+            st.warning(
+                "Please enter an ingredient name."
+            )
 
         else:
 
-            st.session_state.extra_ingredients.append(
-                {
-                    "Ingredients": ingredient,
-                    "Category": new_category
-                }
+            existing = (
+                GROCERIES
+                + VEGETABLES
+                + [
+                    x["Ingredients"]
+                    for x in st.session_state.extra_ingredients
+                ]
             )
 
-            st.success(
-                f"{ingredient} added temporarily."
-            )
+            if ingredient in existing:
+
+                st.warning(
+                    "This ingredient already exists."
+                )
+
+            else:
+
+                st.session_state.extra_ingredients.append(
+                    {
+                        "Ingredients": ingredient,
+                        "Category": new_category
+                    }
+                )
+
+                st.success(
+                    f"{ingredient} added temporarily."
+                )
 
     st.markdown("---")
 
@@ -258,7 +489,7 @@ with st.sidebar:
             color:{CREAM};
         ">
         <b style="color:{GOLD};">
-        Master List
+        Temporary Master List
         </b>
         <br><br>
         Grocery Items: {len(GROCERIES)}
@@ -272,7 +503,7 @@ with st.sidebar:
     )
 
 # ============================================================
-# INFORMATION
+# INFORMATION BOX
 # ============================================================
 
 st.markdown(
@@ -280,12 +511,14 @@ st.markdown(
     <div class="info-box">
 
     <b>How to use:</b><br>
+
     1. Enter the recipe name.<br>
     2. Generate the ingredient requirement.<br>
-    3. Use the search box to find ingredients quickly.<br>
-    4. Enter quantity and purchase unit.<br>
-    5. Category can be edited if required.<br>
-    6. Download the completed requirement as Excel.
+    3. Use the search box to quickly find ingredients.<br>
+    4. Enter quantities in Column D.<br>
+    5. Select the purchase unit in Column E.<br>
+    6. Modify Category in Column C if required.<br>
+    7. Download the completed requirement as Excel.
 
     </div>
     """,
@@ -293,7 +526,7 @@ st.markdown(
 )
 
 # ============================================================
-# RECIPE
+# RECIPE SECTION
 # ============================================================
 
 st.markdown(
@@ -307,7 +540,7 @@ recipe_name = st.text_input(
 )
 
 # ============================================================
-# GENERATE REQUIREMENT
+# GENERATE BUTTON
 # ============================================================
 
 if st.button(
@@ -317,13 +550,17 @@ if st.button(
 ):
 
     if recipe_name.strip() == "":
-        st.warning("Please enter the recipe name.")
+        st.warning(
+            "Please enter the recipe name."
+        )
 
     else:
 
         master_data = []
 
+        # Grocery ingredients
         for item in GROCERIES:
+
             master_data.append(
                 {
                     "Ingredients": item,
@@ -331,7 +568,9 @@ if st.button(
                 }
             )
 
+        # Vegetable ingredients
         for item in VEGETABLES:
+
             master_data.append(
                 {
                     "Ingredients": item,
@@ -339,17 +578,22 @@ if st.button(
                 }
             )
 
+        # Temporarily added ingredients
         master_data.extend(
             st.session_state.extra_ingredients
         )
 
-        master_df = pd.DataFrame(master_data)
+        master_df = pd.DataFrame(
+            master_data
+        )
 
+        # Remove duplicates
         master_df = master_df.drop_duplicates(
             subset=["Ingredients"],
             keep="first"
         ).reset_index(drop=True)
 
+        # Create final table
         requirement = master_df.copy()
 
         requirement.insert(
@@ -359,6 +603,7 @@ if st.button(
         )
 
         requirement["Quantity"] = None
+
         requirement["Purchase Unit"] = ""
 
         requirement = requirement[
@@ -374,7 +619,7 @@ if st.button(
         st.session_state.requirement = requirement
 
 # ============================================================
-# INGREDIENT REQUIREMENT
+# REQUIREMENT TABLE
 # ============================================================
 
 if st.session_state.requirement is not None:
@@ -386,41 +631,35 @@ if st.session_state.requirement is not None:
         unsafe_allow_html=True
     )
 
-    # ========================================================
-    # SEARCH OPTIONS
-    # ========================================================
-
-    col_search, col_quantity = st.columns([3, 1])
-
-    with col_search:
-
-        search_text = st.text_input(
-            "🔎 Search Ingredients",
-            placeholder=(
-                "Type ingredient name in Tamil or English..."
-            ),
-            key="ingredient_search"
-        )
-
-    with col_quantity:
-
-        show_completed = st.checkbox(
-            "Show only entered quantities"
-        )
+    st.caption(
+        "Ingredients are pre-loaded from the master lists. "
+        "Use the search box below to quickly locate an ingredient."
+    )
 
     # ========================================================
-    # CREATE FILTERED VIEW
+    # SEARCH INGREDIENTS
     # ========================================================
 
-    display_df = st.session_state.requirement.copy()
+    search_text = st.text_input(
+        "🔎 Search Ingredients",
+        placeholder="Type ingredient name in Tamil or English...",
+        key="ingredient_search"
+    )
 
-    # Search ingredient names
+    # ========================================================
+    # FILTER TABLE
+    # ========================================================
+
     if search_text.strip():
 
-        search_value = search_text.strip().casefold()
+        search_value = (
+            search_text
+            .strip()
+            .casefold()
+        )
 
-        display_df = display_df[
-            display_df["Ingredients"]
+        display_df = st.session_state.requirement[
+            st.session_state.requirement["Ingredients"]
             .astype(str)
             .str.casefold()
             .str.contains(
@@ -428,18 +667,13 @@ if st.session_state.requirement is not None:
                 na=False,
                 regex=False
             )
-        ]
+        ].copy()
 
-    # Show only completed ingredients
-    if show_completed:
+    else:
 
-        display_df = display_df[
-            display_df["Quantity"].notna()
-            & (
-                display_df["Quantity"].astype(str).str.strip()
-                != ""
-            )
-        ]
+        display_df = (
+            st.session_state.requirement.copy()
+        )
 
     # ========================================================
     # SEARCH RESULT COUNT
@@ -467,6 +701,7 @@ if st.session_state.requirement is not None:
 
             "Recipe": st.column_config.TextColumn(
                 "Recipe",
+                help="Recipe name",
                 required=True
             ),
 
@@ -514,39 +749,41 @@ if st.session_state.requirement is not None:
     )
 
     # ========================================================
-    # SAVE EDITS BACK TO MASTER REQUIREMENT
+    # SAVE CHANGES BACK TO FULL REQUIREMENT
     # ========================================================
 
     if not edited_df.empty:
 
-        for _, edited_row in edited_df.iterrows():
+        for index, row in edited_df.iterrows():
 
-            ingredient_name = edited_row["Ingredients"]
+            ingredient_name = row["Ingredients"]
 
             mask = (
-                st.session_state.requirement["Ingredients"]
+                st.session_state.requirement[
+                    "Ingredients"
+                ]
                 == ingredient_name
             )
 
             st.session_state.requirement.loc[
                 mask,
                 "Recipe"
-            ] = edited_row["Recipe"]
+            ] = row["Recipe"]
 
             st.session_state.requirement.loc[
                 mask,
                 "Category"
-            ] = edited_row["Category"]
+            ] = row["Category"]
 
             st.session_state.requirement.loc[
                 mask,
                 "Quantity"
-            ] = edited_row["Quantity"]
+            ] = row["Quantity"]
 
             st.session_state.requirement.loc[
                 mask,
                 "Purchase Unit"
-            ] = edited_row["Purchase Unit"]
+            ] = row["Purchase Unit"]
 
     # ========================================================
     # SUMMARY
@@ -559,35 +796,35 @@ if st.session_state.requirement is not None:
         unsafe_allow_html=True
     )
 
-    total_ingredients = len(
-        st.session_state.requirement
-    )
-
-    completed = (
-        st.session_state.requirement["Quantity"]
-        .notna()
-        .sum()
-    )
-
-    remaining = (
-        total_ingredients - completed
-    )
-
     col1, col2, col3 = st.columns(3)
 
     with col1:
+
         st.metric(
             "Total Ingredients",
-            total_ingredients
+            len(st.session_state.requirement)
         )
 
     with col2:
+
+        completed = (
+            st.session_state.requirement["Quantity"]
+            .notna()
+            .sum()
+        )
+
         st.metric(
             "Quantities Entered",
             completed
         )
 
     with col3:
+
+        remaining = (
+            len(st.session_state.requirement)
+            - completed
+        )
+
         st.metric(
             "Remaining",
             remaining
@@ -604,8 +841,6 @@ if st.session_state.requirement is not None:
         unsafe_allow_html=True
     )
 
-    download_df = st.session_state.requirement.copy()
-
     output = BytesIO()
 
     with pd.ExcelWriter(
@@ -613,7 +848,7 @@ if st.session_state.requirement is not None:
         engine="openpyxl"
     ) as writer:
 
-        download_df.to_excel(
+        st.session_state.requirement.to_excel(
             writer,
             index=False,
             sheet_name="Ingredient Requirement"
@@ -621,14 +856,8 @@ if st.session_state.requirement is not None:
 
     output.seek(0)
 
-    safe_recipe_name = (
-        recipe_name.strip()
-        if recipe_name.strip()
-        else "Recipe"
-    )
-
     filename = (
-        f"{safe_recipe_name} "
+        f"{recipe_name.strip()} "
         f"- Ingredient Requirement.xlsx"
     )
 
