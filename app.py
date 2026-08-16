@@ -394,11 +394,24 @@ VEGETABLES = [
 # SESSION STATE
 # ============================================================
 
+if "recipe_collection" not in st.session_state:
+    st.session_state.recipe_collection = {}
+
+if "current_recipe" not in st.session_state:
+    st.session_state.current_recipe = None
+
+if "current_recipe_df" not in st.session_state:
+    st.session_state.current_recipe_df = None
+
+if "recipe_number" not in st.session_state:
+    st.session_state.recipe_number = 0
+
+if "show_final_output" not in st.session_state:
+    st.session_state.show_final_output = False
+
 if "extra_ingredients" not in st.session_state:
     st.session_state.extra_ingredients = []
 
-if "requirement" not in st.session_state:
-    st.session_state.requirement = None
 
 # ============================================================
 # SIDEBAR
@@ -415,9 +428,9 @@ with st.sidebar:
         unsafe_allow_html=True
     )
 
-    st.markdown(
-        "Add an ingredient that is not currently available "
-        "in the master template."
+    st.write(
+        "Add an ingredient that is not currently "
+        "available in the master list."
     )
 
     st.markdown("---")
@@ -442,41 +455,37 @@ with st.sidebar:
 
         ingredient = new_ingredient.strip()
 
-        if ingredient == "":
+        existing = (
+            GROCERIES
+            + VEGETABLES
+            + [
+                x["Ingredients"]
+                for x in st.session_state.extra_ingredients
+            ]
+        )
 
+        if ingredient == "":
             st.warning(
-                "Please enter an ingredient name."
+                "Please enter an ingredient."
+            )
+
+        elif ingredient in existing:
+            st.warning(
+                "This ingredient already exists."
             )
 
         else:
 
-            existing = (
-                GROCERIES
-                + VEGETABLES
-                + [
-                    x["Ingredients"]
-                    for x in st.session_state.extra_ingredients
-                ]
+            st.session_state.extra_ingredients.append(
+                {
+                    "Ingredients": ingredient,
+                    "Category": new_category
+                }
             )
 
-            if ingredient in existing:
-
-                st.warning(
-                    "This ingredient already exists."
-                )
-
-            else:
-
-                st.session_state.extra_ingredients.append(
-                    {
-                        "Ingredients": ingredient,
-                        "Category": new_category
-                    }
-                )
-
-                st.success(
-                    f"{ingredient} added temporarily."
-                )
+            st.success(
+                f"{ingredient} added temporarily."
+            )
 
     st.markdown("---")
 
@@ -489,7 +498,7 @@ with st.sidebar:
             color:{CREAM};
         ">
         <b style="color:{GOLD};">
-        Temporary Master List
+        Master List
         </b>
         <br><br>
         Grocery Items: {len(GROCERIES)}
@@ -497,10 +506,13 @@ with st.sidebar:
         Vegetable Items: {len(VEGETABLES)}
         <br>
         Added Items: {len(st.session_state.extra_ingredients)}
+        <br>
+        Recipes Saved: {len(st.session_state.recipe_collection)}
         </div>
         """,
         unsafe_allow_html=True
     )
+
 
 # ============================================================
 # INFORMATION BOX
@@ -510,157 +522,217 @@ st.markdown(
     f"""
     <div class="info-box">
 
-    <b>How to use:</b><br>
+    <b>How to use:</b><br><br>
 
-    1. Enter the recipe name.<br>
-    2. Generate the ingredient requirement.<br>
-    3. Use the search box to quickly locate ingredients.<br>
-    4. Enter quantities in Column D.<br>
-    5. Select the purchase unit in Column E.<br>
-    6. Modify Category in Column C if required.<br>
-    7. Download Excel or copy the text for sharing.
+    1. Enter the first recipe name.<br>
+    2. Click <b>Generate Ingredient List</b>.<br>
+    3. Search for ingredients using the search box.<br>
+    4. Enter Qty and Unit for the required ingredients.<br>
+    5. Click <b>Save Recipe & Continue</b>.<br>
+    6. Enter the next recipe and repeat.<br>
+    7. When all recipes are completed, click
+       <b>Finish & Generate Consolidated List</b>.<br><br>
+
+    <b>Important:</b> Only ingredients for which a quantity
+    has been entered will appear in the final output.
 
     </div>
     """,
     unsafe_allow_html=True
 )
 
-# ============================================================
-# RECIPE SECTION
-# ============================================================
-
-st.markdown(
-    '<div class="section-title">🍛 Recipe Details</div>',
-    unsafe_allow_html=True
-)
-
-recipe_name = st.text_input(
-    "Recipe Name",
-    placeholder="Example: Vegetable Biryani"
-)
 
 # ============================================================
-# GENERATE BUTTON
+# SAVED RECIPES DISPLAY
 # ============================================================
 
-if st.button(
-    "✨ Generate Ingredient Requirement",
-    type="primary",
-    use_container_width=True
-):
-
-    if recipe_name.strip() == "":
-
-        st.warning(
-            "Please enter the recipe name."
-        )
-
-    else:
-
-        master_data = []
-
-        # Grocery ingredients
-        for item in GROCERIES:
-
-            master_data.append(
-                {
-                    "Ingredients": item,
-                    "Category": "Grocery"
-                }
-            )
-
-        # Vegetable ingredients
-        for item in VEGETABLES:
-
-            master_data.append(
-                {
-                    "Ingredients": item,
-                    "Category": "Vegetables"
-                }
-            )
-
-        # Temporarily added ingredients
-        master_data.extend(
-            st.session_state.extra_ingredients
-        )
-
-        master_df = pd.DataFrame(
-            master_data
-        )
-
-        # Remove duplicates
-        master_df = master_df.drop_duplicates(
-            subset=["Ingredients"],
-            keep="first"
-        ).reset_index(drop=True)
-
-        # Create final table
-        requirement = master_df.copy()
-
-        requirement.insert(
-            0,
-            "Recipe",
-            recipe_name.strip()
-        )
-
-        requirement["Quantity"] = None
-        requirement["Purchase Unit"] = ""
-
-        requirement = requirement[
-            [
-                "Recipe",
-                "Ingredients",
-                "Category",
-                "Quantity",
-                "Purchase Unit"
-            ]
-        ]
-
-        st.session_state.requirement = requirement
-
-# ============================================================
-# REQUIREMENT TABLE
-# ============================================================
-
-if st.session_state.requirement is not None:
+if st.session_state.recipe_collection:
 
     st.markdown(
         '<div class="section-title">'
-        '📋 Ingredient Requirement'
+        '✅ Recipes Saved'
         '</div>',
         unsafe_allow_html=True
     )
 
+    saved_names = list(
+        st.session_state.recipe_collection.keys()
+    )
+
+    st.success(
+        "  →  ".join(saved_names)
+    )
+
     st.caption(
-        "Ingredients are pre-loaded from the master lists. "
-        "Use the search box to quickly locate an ingredient."
+        f"{len(saved_names)} recipe(s) currently saved."
     )
 
-    # ========================================================
-    # SEARCH
-    # ========================================================
 
-    search_text = st.text_input(
-        "🔎 Search Ingredients",
-        placeholder="Type ingredient name in Tamil or English...",
-        key="ingredient_search"
-    )
+# ============================================================
+# NEW / CURRENT RECIPE
+# ============================================================
 
-    # ========================================================
-    # FILTER DISPLAY ONLY
-    # ========================================================
+if not st.session_state.show_final_output:
 
-    if search_text.strip():
+    # --------------------------------------------------------
+    # RECIPE NAME
+    # --------------------------------------------------------
 
-        search_value = (
-            search_text
-            .strip()
-            .casefold()
+    if st.session_state.current_recipe_df is None:
+
+        st.markdown(
+            '<div class="section-title">'
+            '🍛 Recipe Details'
+            '</div>',
+            unsafe_allow_html=True
         )
 
-        display_df = (
-            st.session_state.requirement[
-                st.session_state.requirement["Ingredients"]
+        recipe_name = st.text_input(
+            "Recipe Name",
+            placeholder="Example: Apple",
+            key="recipe_name_input"
+        )
+
+        # ----------------------------------------------------
+        # GENERATE INGREDIENT LIST
+        # ----------------------------------------------------
+
+        if st.button(
+            "✨ Generate Ingredient List",
+            type="primary",
+            use_container_width=True
+        ):
+
+            if recipe_name.strip() == "":
+
+                st.warning(
+                    "Please enter the recipe name."
+                )
+
+            elif recipe_name.strip() in (
+                st.session_state.recipe_collection
+            ):
+
+                st.warning(
+                    "This recipe name has already been saved. "
+                    "Please use a different name."
+                )
+
+            else:
+
+                master_data = []
+
+                # Grocery ingredients
+                for item in GROCERIES:
+
+                    master_data.append(
+                        {
+                            "Ingredients": item,
+                            "Category": "Grocery"
+                        }
+                    )
+
+                # Vegetable ingredients
+                for item in VEGETABLES:
+
+                    master_data.append(
+                        {
+                            "Ingredients": item,
+                            "Category": "Vegetables"
+                        }
+                    )
+
+                # Temporarily added ingredients
+                master_data.extend(
+                    st.session_state.extra_ingredients
+                )
+
+                master_df = pd.DataFrame(
+                    master_data
+                )
+
+                master_df = master_df.drop_duplicates(
+                    subset=["Ingredients"],
+                    keep="first"
+                ).reset_index(drop=True)
+
+                requirement = master_df.copy()
+
+                requirement.insert(
+                    0,
+                    "Recipe",
+                    recipe_name.strip()
+                )
+
+                requirement["Qty"] = pd.NA
+                requirement["Unit"] = ""
+
+                requirement = requirement[
+                    [
+                        "Recipe",
+                        "Ingredients",
+                        "Category",
+                        "Qty",
+                        "Unit"
+                    ]
+                ]
+
+                st.session_state.current_recipe = (
+                    recipe_name.strip()
+                )
+
+                st.session_state.current_recipe_df = (
+                    requirement
+                )
+
+                st.session_state.recipe_number += 1
+
+                st.rerun()
+
+
+    # ========================================================
+    # CURRENT RECIPE INGREDIENT EDITOR
+    # ========================================================
+
+    if st.session_state.current_recipe_df is not None:
+
+        current_df = (
+            st.session_state.current_recipe_df.copy()
+        )
+
+        current_recipe_name = (
+            st.session_state.current_recipe
+        )
+
+        st.markdown(
+            '<div class="section-title">'
+            f'📋 {current_recipe_name} - Ingredients'
+            '</div>',
+            unsafe_allow_html=True
+        )
+
+        # ----------------------------------------------------
+        # SEARCH
+        # ----------------------------------------------------
+
+        search_text = st.text_input(
+            "🔎 Search Ingredients",
+            placeholder=(
+                "Type ingredient name in Tamil or English..."
+            ),
+            key=f"search_{st.session_state.recipe_number}"
+        )
+
+        display_df = current_df.copy()
+
+        if search_text.strip():
+
+            search_value = (
+                search_text.strip().casefold()
+            )
+
+            display_df = display_df[
+                display_df["Ingredients"]
                 .astype(str)
                 .str.casefold()
                 .str.contains(
@@ -669,413 +741,488 @@ if st.session_state.requirement is not None:
                     regex=False
                 )
             ]
-            .copy()
+
+        st.caption(
+            f"Showing {len(display_df)} of "
+            f"{len(current_df)} ingredients"
         )
 
-    else:
+        # ----------------------------------------------------
+        # DATA EDITOR
+        # ----------------------------------------------------
 
-        display_df = (
-            st.session_state.requirement.copy()
-        )
+        edited_df = st.data_editor(
 
-    # ========================================================
-    # SEARCH RESULT COUNT
-    # ========================================================
+            display_df,
 
-    st.caption(
-        f"Showing {len(display_df)} of "
-        f"{len(st.session_state.requirement)} ingredients"
-    )
+            use_container_width=True,
 
-    # ========================================================
-    # DATA EDITOR
-    # ========================================================
+            hide_index=True,
 
-    edited_df = st.data_editor(
-        display_df,
+            num_rows="fixed",
 
-        use_container_width=True,
+            key=f"editor_{st.session_state.recipe_number}",
 
-        hide_index=True,
+            column_config={
 
-        num_rows="fixed",
+                "Recipe": st.column_config.TextColumn(
+                    "Recipe",
+                    disabled=True
+                ),
 
-        column_config={
+                "Ingredients": st.column_config.TextColumn(
+                    "Ingredients",
+                    disabled=True
+                ),
 
-            "Recipe": st.column_config.TextColumn(
+                "Category": st.column_config.TextColumn(
+                    "Category",
+                    disabled=True
+                ),
+
+                "Qty": st.column_config.NumberColumn(
+                    "Qty",
+                    min_value=0,
+                    step=0.001,
+                    format="%.3f"
+                ),
+
+                "Unit": st.column_config.SelectboxColumn(
+                    "Unit",
+                    options=[
+                        "kg",
+                        "g",
+                        "litre",
+                        "ml",
+                        "piece",
+                        "dozen"
+                    ]
+                )
+            },
+
+            disabled=[
                 "Recipe",
-                help="Recipe name",
-                required=True
-            ),
-
-            "Ingredients": st.column_config.TextColumn(
                 "Ingredients",
-                help="Pre-loaded from master template",
-                disabled=True
-            ),
+                "Category"
+            ]
+        )
 
-            "Category": st.column_config.SelectboxColumn(
-                "Category",
-                options=[
-                    "Grocery",
-                    "Vegetables"
-                ],
-                help="Automatically populated but editable",
-                required=True
-            ),
-
-            "Quantity": st.column_config.NumberColumn(
-                "Quantity",
-                help="Enter required quantity",
-                min_value=0,
-                step=0.001,
-                format="%.3f"
-            ),
-
-            "Purchase Unit": st.column_config.SelectboxColumn(
-                "Purchase Unit",
-                options=[
-                    "kg",
-                    "g",
-                    "litre",
-                    "ml",
-                    "piece",
-                    "dozen"
-                ],
-                help="Select purchase unit"
-            )
-        },
-
-        disabled=[
-            "Ingredients"
-        ],
-
-        key="ingredient_editor"
-    )
-
-    # ========================================================
-    # SAVE EDITS BACK TO FULL REQUIREMENT
-    # ========================================================
-
-    if not edited_df.empty:
+        # ----------------------------------------------------
+        # SAVE EDITS TO CURRENT RECIPE
+        # ----------------------------------------------------
 
         for _, row in edited_df.iterrows():
 
             ingredient_name = row["Ingredients"]
 
             mask = (
-                st.session_state.requirement[
+                st.session_state.current_recipe_df[
                     "Ingredients"
                 ]
                 == ingredient_name
             )
 
-            st.session_state.requirement.loc[
+            st.session_state.current_recipe_df.loc[
                 mask,
-                "Recipe"
-            ] = row["Recipe"]
+                "Qty"
+            ] = row["Qty"]
 
-            st.session_state.requirement.loc[
+            st.session_state.current_recipe_df.loc[
                 mask,
-                "Category"
-            ] = row["Category"]
+                "Unit"
+            ] = row["Unit"]
 
-            st.session_state.requirement.loc[
-                mask,
-                "Quantity"
-            ] = row["Quantity"]
 
-            st.session_state.requirement.loc[
-                mask,
-                "Purchase Unit"
-            ] = row["Purchase Unit"]
+        # ----------------------------------------------------
+        # CURRENT RECIPE STATUS
+        # ----------------------------------------------------
+
+        entered_count = (
+            st.session_state.current_recipe_df[
+                "Qty"
+            ]
+            .notna()
+            .sum()
+        )
+
+        st.info(
+            f"**{current_recipe_name}** — "
+            f"{entered_count} ingredient(s) entered."
+        )
+
+
+        # ====================================================
+        # BUTTONS
+        # ====================================================
+
+        col1, col2 = st.columns(2)
+
+
+        # ----------------------------------------------------
+        # SAVE RECIPE & CONTINUE
+        # ----------------------------------------------------
+
+        with col1:
+
+            if st.button(
+                "➕ Save Recipe & Continue",
+                type="primary",
+                use_container_width=True
+            ):
+
+                recipe_df = (
+                    st.session_state.current_recipe_df.copy()
+                )
+
+                # Keep only rows with quantity
+                recipe_df = recipe_df[
+                    recipe_df["Qty"].notna()
+                ].copy()
+
+                recipe_df = recipe_df[
+                    recipe_df["Qty"]
+                    .astype(str)
+                    .str.strip()
+                    != ""
+                ]
+
+                if recipe_df.empty:
+
+                    st.error(
+                        "Please enter at least one quantity "
+                        "before saving this recipe."
+                    )
+
+                else:
+
+                    recipe_df = recipe_df[
+                        [
+                            "Recipe",
+                            "Ingredients",
+                            "Qty",
+                            "Unit"
+                        ]
+                    ].copy()
+
+                    # ----------------------------------------
+                    # CRITICAL:
+                    # STORE A COPY OF THIS RECIPE
+                    # ----------------------------------------
+
+                    st.session_state.recipe_collection[
+                        current_recipe_name
+                    ] = recipe_df.copy()
+
+                    st.success(
+                        f"✅ '{current_recipe_name}' saved."
+                    )
+
+                    # Clear current recipe
+                    st.session_state.current_recipe = None
+                    st.session_state.current_recipe_df = None
+
+                    # Reset recipe input
+                    st.session_state.recipe_name_input = ""
+
+                    st.rerun()
+
+
+        # ----------------------------------------------------
+        # FINISH & GENERATE
+        # ----------------------------------------------------
+
+        with col2:
+
+            if st.button(
+                "✅ Finish & Generate Consolidated List",
+                use_container_width=True
+            ):
+
+                recipe_df = (
+                    st.session_state.current_recipe_df.copy()
+                )
+
+                # Keep only entered quantities
+                recipe_df = recipe_df[
+                    recipe_df["Qty"].notna()
+                ].copy()
+
+                recipe_df = recipe_df[
+                    recipe_df["Qty"]
+                    .astype(str)
+                    .str.strip()
+                    != ""
+                ]
+
+                # Save current recipe
+                if not recipe_df.empty:
+
+                    recipe_df = recipe_df[
+                        [
+                            "Recipe",
+                            "Ingredients",
+                            "Qty",
+                            "Unit"
+                        ]
+                    ].copy()
+
+                    st.session_state.recipe_collection[
+                        current_recipe_name
+                    ] = recipe_df.copy()
+
+                if not st.session_state.recipe_collection:
+
+                    st.warning(
+                        "No recipe has been saved yet."
+                    )
+
+                else:
+
+                    st.session_state.current_recipe = None
+                    st.session_state.current_recipe_df = None
+                    st.session_state.show_final_output = True
+
+                    st.rerun()
+
+
+# ============================================================
+# FINAL CONSOLIDATED OUTPUT
+# ============================================================
+
+if (
+    st.session_state.show_final_output
+    and st.session_state.recipe_collection
+):
+
+    st.markdown(
+        '<div class="section-title">'
+        '📊 Consolidated Recipe Ingredient List'
+        '</div>',
+        unsafe_allow_html=True
+    )
+
+    # ========================================================
+    # COMBINE ALL SAVED RECIPES
+    # ========================================================
+
+    all_recipe_data = []
+
+    for (
+        recipe_name_saved,
+        recipe_df_saved
+    ) in st.session_state.recipe_collection.items():
+
+        all_recipe_data.append(
+            recipe_df_saved.copy()
+        )
+
+    final_df = pd.concat(
+        all_recipe_data,
+        ignore_index=True
+    )
+
+    # ========================================================
+    # FINAL COLUMN ORDER
+    # ========================================================
+
+    final_df = final_df[
+        [
+            "Recipe",
+            "Ingredients",
+            "Qty",
+            "Unit"
+        ]
+    ]
+
+
+    # ========================================================
+    # DISPLAY
+    # ========================================================
+
+    st.dataframe(
+        final_df,
+        use_container_width=True,
+        hide_index=True
+    )
+
 
     # ========================================================
     # SUMMARY
     # ========================================================
 
-    st.markdown(
-        '<div class="section-title">'
-        '📊 Requirement Summary'
-        '</div>',
-        unsafe_allow_html=True
-    )
-
-    total_ingredients = len(
-        st.session_state.requirement
-    )
-
-    completed_mask = (
-        st.session_state.requirement["Quantity"]
-        .notna()
-    )
-
-    completed = completed_mask.sum()
-
-    remaining = (
-        total_ingredients - completed
-    )
-
-    col1, col2, col3 = st.columns(3)
+    col1, col2 = st.columns(2)
 
     with col1:
 
         st.metric(
-            "Total Ingredients",
-            total_ingredients
+            "Total Recipes",
+            final_df["Recipe"].nunique()
         )
 
     with col2:
 
         st.metric(
-            "Quantities Entered",
-            completed
+            "Total Ingredient Lines",
+            len(final_df)
         )
 
-    with col3:
-
-        st.metric(
-            "Remaining",
-            remaining
-        )
 
     # ========================================================
-    # OUTPUT SECTION
+    # EXCEL DOWNLOAD
     # ========================================================
 
     st.markdown(
         '<div class="section-title">'
-        '⬇️ Download / Share'
+        '📥 Download'
         '</div>',
         unsafe_allow_html=True
     )
 
-    # ========================================================
-    # ONLY ROWS WITH QUANTITY
-    # ========================================================
+    excel_output = BytesIO()
 
-    completed_df = (
-        st.session_state.requirement[
-            st.session_state.requirement["Quantity"]
-            .notna()
-        ]
-        .copy()
+    with pd.ExcelWriter(
+        excel_output,
+        engine="openpyxl"
+    ) as writer:
+
+        final_df.to_excel(
+            writer,
+            index=False,
+            sheet_name="Recipe Ingredients"
+        )
+
+    excel_output.seek(0)
+
+    st.download_button(
+        label="📥 Download Excel",
+        data=excel_output.getvalue(),
+        file_name="Recipe_Ingredient_Requirements.xlsx",
+        mime=(
+            "application/vnd.openxmlformats-officedocument."
+            "spreadsheetml.sheet"
+        ),
+        use_container_width=True
     )
 
-    # Remove completely blank quantity values
-    completed_df = completed_df[
-        completed_df["Quantity"]
-        .astype(str)
-        .str.strip()
-        != ""
-    ]
 
-    if completed_df.empty:
+    # ========================================================
+    # TEXT OUTPUT
+    # ========================================================
 
-        st.info(
-            "Enter at least one quantity to enable "
-            "Excel and Text sharing."
-        )
+    st.markdown(
+        '<div class="section-title">'
+        '📱 Copy / Share as Text'
+        '</div>',
+        unsafe_allow_html=True
+    )
 
-    else:
+    text_lines = []
 
-        # ====================================================
-        # EXCEL DOWNLOAD
-        # ====================================================
-
-        output = BytesIO()
-
-        with pd.ExcelWriter(
-            output,
-            engine="openpyxl"
-        ) as writer:
-
-            completed_df.to_excel(
-                writer,
-                index=False,
-                sheet_name="Ingredient Requirement"
-            )
-
-        output.seek(0)
-
-        safe_recipe_name = (
-            recipe_name.strip()
-            if recipe_name.strip()
-            else "Recipe"
-        )
-
-        excel_filename = (
-            f"{safe_recipe_name} "
-            f"- Ingredient Requirement.xlsx"
-        )
-
-        st.download_button(
-            label="📥 Download Excel",
-            data=output.getvalue(),
-            file_name=excel_filename,
-            mime=(
-                "application/vnd.openxmlformats-officedocument."
-                "spreadsheetml.sheet"
-            ),
-            use_container_width=True
-        )
-
-        # ====================================================
-        # CREATE TEXT VERSION
-        # ====================================================
-
-        text_lines = []
+    for (
+        recipe_name_saved,
+        recipe_df_saved
+    ) in st.session_state.recipe_collection.items():
 
         text_lines.append(
-            f"🍛 {safe_recipe_name.upper()}"
-        )
-
-        text_lines.append("")
-        text_lines.append(
-            "INGREDIENT REQUIREMENT"
+            f"🍛 {recipe_name_saved}"
         )
 
         text_lines.append(
-            "----------------------------"
+            "------------------------------"
         )
 
-        # ====================================================
-        # GROUP BY CATEGORY
-        # ====================================================
+        for _, row in recipe_df_saved.iterrows():
 
-        categories = [
-            "Grocery",
-            "Vegetables"
-        ]
+            qty = row["Qty"]
 
-        for category in categories:
+            try:
 
-            category_df = completed_df[
-                completed_df["Category"]
-                == category
-            ]
+                qty_float = float(qty)
 
-            if category_df.empty:
-                continue
+                if qty_float.is_integer():
 
-            text_lines.append("")
-            text_lines.append(
-                f"📌 {category.upper()}"
-            )
-
-            for _, row in category_df.iterrows():
-
-                ingredient = str(
-                    row["Ingredients"]
-                ).strip()
-
-                quantity = row["Quantity"]
-
-                unit = str(
-                    row["Purchase Unit"]
-                ).strip()
-
-                # --------------------------------------------
-                # FORMAT QUANTITY
-                # --------------------------------------------
-
-                try:
-
-                    quantity_float = float(
-                        quantity
-                    )
-
-                    if quantity_float.is_integer():
-
-                        quantity_text = str(
-                            int(quantity_float)
-                        )
-
-                    else:
-
-                        quantity_text = (
-                            f"{quantity_float:.3f}"
-                            .rstrip("0")
-                            .rstrip(".")
-                        )
-
-                except:
-
-                    quantity_text = str(
-                        quantity
-                    )
-
-                # --------------------------------------------
-                # CREATE TEXT LINE
-                # --------------------------------------------
-
-                if unit:
-
-                    text_lines.append(
-                        f"• {ingredient} - "
-                        f"{quantity_text} {unit}"
+                    qty_text = str(
+                        int(qty_float)
                     )
 
                 else:
 
-                    text_lines.append(
-                        f"• {ingredient} - "
-                        f"{quantity_text}"
+                    qty_text = (
+                        f"{qty_float:.3f}"
+                        .rstrip("0")
+                        .rstrip(".")
                     )
 
-        text_output = "\n".join(
-            text_lines
-        )
+            except:
 
-        # ====================================================
-        # TEXT TO COPY / SHARE
-        # ====================================================
+                qty_text = str(qty)
 
-        st.markdown(
-            "**📱 Text to Share**"
-        )
+            unit = str(
+                row["Unit"]
+            ).strip()
 
-        st.caption(
-            "Click inside the box, press Ctrl+A, then Ctrl+C "
-            "to copy and paste into WhatsApp, SMS, email, etc."
-        )
+            text_lines.append(
+                f"{row['Ingredients']} - "
+                f"{qty_text} {unit}"
+            )
 
-        st.text_area(
-            "Copy the text below:",
-            value=text_output,
-            height=350,
-            key="share_text"
-        )
+        text_lines.append("")
 
-        # ====================================================
-        # DOWNLOAD TEXT FILE
-        # ====================================================
 
-        text_filename = (
-            f"{safe_recipe_name} "
-            f"- Ingredient Requirement.txt"
-        )
+    text_output = "\n".join(
+        text_lines
+    )
 
-        st.download_button(
-            label="📄 Download Text File",
-            data=text_output,
-            file_name=text_filename,
-            mime="text/plain",
-            use_container_width=True
-        )
 
     # ========================================================
-    # CLEAR
+    # COPYABLE TEXT
     # ========================================================
+
+    st.text_area(
+        "Copy this text and share through WhatsApp / SMS / Email",
+        value=text_output,
+        height=500
+    )
+
+
+    # ========================================================
+    # TEXT FILE DOWNLOAD
+    # ========================================================
+
+    st.download_button(
+        label="📄 Download Text File",
+        data=text_output,
+        file_name="Recipe_Ingredient_Requirements.txt",
+        mime="text/plain",
+        use_container_width=True
+    )
+
+
+    # ========================================================
+    # START NEW REQUIREMENT
+    # ========================================================
+
+    st.markdown("---")
 
     if st.button(
-        "🗑️ Clear Current Requirement",
+        "🔄 Start New Requirement",
         use_container_width=True
     ):
 
-        st.session_state.requirement = None
+        st.session_state.recipe_collection = {}
+
+        st.session_state.current_recipe = None
+
+        st.session_state.current_recipe_df = None
+
+        st.session_state.recipe_number = 0
+
+        st.session_state.show_final_output = False
+
+        st.session_state.extra_ingredients = []
 
         st.rerun()
+
 
 # ============================================================
 # FOOTER
